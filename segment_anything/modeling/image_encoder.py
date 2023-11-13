@@ -10,16 +10,18 @@ import torch.nn.functional as F
 
 from typing import Optional, Tuple, Type
 
-from .common import LayerNorm2d, MLPBlock
+from .common import LayerNorm2d, MLPBlock   #../modeling/common.py 의 layer block
 
 
 # This class and its supporting functions below lightly adapted from the ViTDet backbone available at: https://github.com/facebookresearch/detectron2/blob/main/detectron2/modeling/backbone/vit.py # noqa
+
+# 처음 image encoding하는 부분
 class ImageEncoderViT(nn.Module):
     def __init__(
         self,
-        img_size: int = 1024,
+        img_size: int = 1024,  
         patch_size: int = 16,
-        in_chans: int = 3,
+        in_chans: int = 3,      
         embed_dim: int = 768,
         depth: int = 12,
         num_heads: int = 12,
@@ -37,7 +39,7 @@ class ImageEncoderViT(nn.Module):
         """
         Args:
             img_size (int): Input image size.
-            patch_size (int): Patch size.
+            patch_size (int): Patch size.       ???????
             in_chans (int): Number of input image channels.
             embed_dim (int): Patch embedding dimension.
             depth (int): Depth of ViT.
@@ -55,23 +57,23 @@ class ImageEncoderViT(nn.Module):
         super().__init__()
         self.img_size = img_size
 
-        self.patch_embed = PatchEmbed(
+        self.patch_embed = PatchEmbed(  #Image to Patch Embedding. # B C H W -> B H W C 배치 바꾸고 , 정해진 parameter로 conv2d
             kernel_size=(patch_size, patch_size),
             stride=(patch_size, patch_size),
             in_chans=in_chans,
             embed_dim=embed_dim,
         )
 
-        self.pos_embed: Optional[nn.Parameter] = None
+        self.pos_embed: Optional[nn.Parameter] = None   #구조체?
         if use_abs_pos:
-            # Initialize absolute positional embedding with pretrain image size.
+            # Initialize absolute positional embedding with pretrain image size.  ? pretrain 가져올때 사용하나?
             self.pos_embed = nn.Parameter(
-                torch.zeros(1, img_size // patch_size, img_size // patch_size, embed_dim)
+                torch.zeros(1, img_size // patch_size, img_size // patch_size, embed_dim)   #배열 정의... img사이즈 변경
             )
 
-        self.blocks = nn.ModuleList()
+        self.blocks = nn.ModuleList()   #nn.ModuleList?
         for i in range(depth):
-            block = Block(
+            block = Block(  # __Transformer blocks__ with support of window attention and residual propagation blocks 아래 class
                 dim=embed_dim,
                 num_heads=num_heads,
                 mlp_ratio=mlp_ratio,
@@ -83,13 +85,13 @@ class ImageEncoderViT(nn.Module):
                 window_size=window_size if i not in global_attn_indexes else 0,
                 input_size=(img_size // patch_size, img_size // patch_size),
             )
-            self.blocks.append(block)
+            self.blocks.append(block)   #depth 만큼 반복해서 붙임
 
-        self.neck = nn.Sequential(
+        self.neck = nn.Sequential(  #(conv2d - norm2d -norm2d) sequentail
             nn.Conv2d(
                 embed_dim,
                 out_chans,
-                kernel_size=1,
+                kernel_size=1,      #?????
                 bias=False,
             ),
             LayerNorm2d(out_chans),
@@ -101,17 +103,17 @@ class ImageEncoderViT(nn.Module):
                 bias=False,
             ),
             LayerNorm2d(out_chans),
-        )
+        )   #여기까지 init
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:
-        x = self.patch_embed(x)
+        x = self.patch_embed(x)     #x 를 conv2d , # B C H W -> B H W C 순서 바꿈  
         if self.pos_embed is not None:
-            x = x + self.pos_embed
+            x = x + self.pos_embed  # pre-trained 모델이 있으면 붙이기...
 
-        for blk in self.blocks:
+        for blk in self.blocks: #block 모델 부분 , transformer
             x = blk(x)
 
-        x = self.neck(x.permute(0, 3, 1, 2))
+        x = self.neck(x.permute(0, 3, 1, 2))    #추가 fc conv
 
         return x
 
@@ -119,7 +121,7 @@ class ImageEncoderViT(nn.Module):
 class Block(nn.Module):
     """Transformer blocks with support of window attention and residual propagation blocks"""
 
-    def __init__(
+    def __init__(  #파라미터 받아오기
         self,
         dim: int,
         num_heads: int,
@@ -148,8 +150,8 @@ class Block(nn.Module):
                 positional parameter size.
         """
         super().__init__()
-        self.norm1 = norm_layer(dim)
-        self.attn = Attention(
+        self.norm1 = norm_layer(dim)    #LayerNorm
+        self.attn = Attention(  #transformer 블록이니까 당연히 attention으로 구성
             dim,
             num_heads=num_heads,
             qkv_bias=qkv_bias,
@@ -182,7 +184,7 @@ class Block(nn.Module):
         return x
 
 
-class Attention(nn.Module):
+class Attention(nn.Module): #attention func
     """Multi-head Attention block with relative position embeddings."""
 
     def __init__(
@@ -201,7 +203,7 @@ class Attention(nn.Module):
             qkv_bias (bool):  If True, add a learnable bias to query, key, value.
             rel_pos (bool): If True, add relative positional embeddings to the attention map.
             rel_pos_zero_init (bool): If True, zero initialize relative positional parameters.
-            input_size (tuple(int, int) or None): Input resolution for calculating the relative
+            input_size (tuple(int,. 이를 해결하기 위해 트랜스포머는 사전 훈련 방법과 레이블이 없는 대규모 데이터에 대해 미리 학습하는 전처리 단계를 거치는 방법을 사용합니다. 이렇게 사전 훈련된 모델은 더 적은 데이터로도 일반화된 결과를 얻을 수 있게 도와줍니 int) or None): Input resolution for calculating the relative
                 positional parameter size.
         """
         super().__init__()
@@ -239,8 +241,10 @@ class Attention(nn.Module):
 
         return x
 
+#--------------------------------image_encoder class-------------------------------------------
 
 def window_partition(x: torch.Tensor, window_size: int) -> Tuple[torch.Tensor, Tuple[int, int]]:
+    #window가 분할됐을 때, 크기 조절 함수, 이미지 출력용?
     """
     Partition into non-overlapping windows with padding if needed.
     Args:
@@ -264,7 +268,7 @@ def window_partition(x: torch.Tensor, window_size: int) -> Tuple[torch.Tensor, T
     return windows, (Hp, Wp)
 
 
-def window_unpartition(
+def window_unpartition( #window가 분할되지 않았을때
     windows: torch.Tensor, window_size: int, pad_hw: Tuple[int, int], hw: Tuple[int, int]
 ) -> torch.Tensor:
     """
@@ -322,7 +326,7 @@ def get_rel_pos(q_size: int, k_size: int, rel_pos: torch.Tensor) -> torch.Tensor
     return rel_pos_resized[relative_coords.long()]
 
 
-def add_decomposed_rel_pos(
+def add_decomposed_rel_pos(#...??? decomposed relative positional
     attn: torch.Tensor,
     q: torch.Tensor,
     rel_pos_h: torch.Tensor,
@@ -361,9 +365,10 @@ def add_decomposed_rel_pos(
     return attn
 
 
-class PatchEmbed(nn.Module):
+class PatchEmbed(nn.Module):        #Image to patch embedding
+    #각 이미지를 패치로 분할하고 각 패치를 임베딩하여 특징 벡터로 반환
     """
-    Image to Patch Embedding.
+    Image to Patch Embedding. 
     """
 
     def __init__(
@@ -384,11 +389,11 @@ class PatchEmbed(nn.Module):
         """
         super().__init__()
 
-        self.proj = nn.Conv2d(
+        self.proj = nn.Conv2d(  
             in_chans, embed_dim, kernel_size=kernel_size, stride=stride, padding=padding
         )
 
-    def forward(self, x: torch.Tensor) -> torch.Tensor:
+    def forward(self, x: torch.Tensor) -> torch.Tensor: #conv후 순서바꿔 출력
         x = self.proj(x)
         # B C H W -> B H W C
         x = x.permute(0, 2, 3, 1)
