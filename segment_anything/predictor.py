@@ -7,11 +7,11 @@
 import numpy as np
 import torch
 
-from segment_anything.modeling import Sam
+from modeling import Sam
 
 from typing import Optional, Tuple
 
-from .utils.transforms import ResizeLongestSide
+from utils.transforms import ResizeLongestSide
 
 
 class SamPredictor:
@@ -253,7 +253,7 @@ class SamPredictor:
                 "An image must be set with .set_image(...) to generate an embedding."
             )
         assert self.features is not None, "Features must exist if an image has been set."
-        return self.features
+        return self.featuresefault
 
     @property
     def device(self) -> torch.device:
@@ -267,3 +267,4 @@ class SamPredictor:
         self.orig_w = None
         self.input_h = None
         self.input_w = None
+1

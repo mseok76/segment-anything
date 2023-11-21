@@ -5,19 +5,17 @@
 # LICENSE file in the root directory of this source tree.
 
 
-#build_sam.py는 실질적으로 프로그램을 build하는 코드, 각종 parameter값을 여기서 결정하고 해당 파라미터를
-#인수로 모델들을 불러온다
+#build_sam.py is build model, decide parameters and call func
 
 import torch
 
 from functools import partial
 
 from .modeling import ImageEncoderViT, MaskDecoder, PromptEncoder, Sam, TwoWayTransformer
-# 정의된 모델 class들 불러옴 
+# call model class
 
 
-#build_sam의 옵션에 따라 3가지 경우로 나눠서 parameter 조정해서 정의한듯
-#3가지 함수가 정의되어 있으나 사용된선 h 뿐
+#build_sam has 3 option, according to quality
 def build_sam_vit_h(checkpoint=None):
     return _build_sam(
         encoder_embed_dim=1280,
@@ -25,10 +23,10 @@ def build_sam_vit_h(checkpoint=None):
         encoder_num_heads=16,
         encoder_global_attn_indexes=[7, 15, 23, 31],
         checkpoint=checkpoint,
-    )   #return 되는 값들, _bulid_sam은 어디서 정의됨?
+    )   #return
 
 
-build_sam = build_sam_vit_h #build_sam은 어디 사용되나...
+build_sam = build_sam_vit_h 
 
 
 def build_sam_vit_l(checkpoint=None):
@@ -46,11 +44,10 @@ def build_sam_vit_b(checkpoint=None):
         encoder_embed_dim=768,
         encoder_depth=12,
         encoder_num_heads=12,
-        encoder_global_attn_indexes=[2, 5, 8, 11],#build_sam의 옵션에 따라 3가지 경우로 나눠서 parameter 조정해서 정의한듯
-#3가지 함수가 정의되어 있으나 사용된선 h 뿐
+        encoder_global_attn_indexes=[2, 5, 8, 11],
     )
 
-#경우에 따라 다른 함수 사용 , default는 h, 위에서도 build_sam에 h 저장
+# default option is vit_h
 sam_model_registry = {
     "default": build_sam_vit_h,
     "vit_h": build_sam_vit_h,
@@ -107,7 +104,7 @@ def _build_sam(
         pixel_std=[58.395, 57.12, 57.375],
     )
     
-    #이미 학습시킨 sam 가중치가 있다면 이렇게 가져옴
+    #pre trained model is available, open it
     sam.eval()
     if checkpoint is not None:
         with open(checkpoint, "rb") as f:

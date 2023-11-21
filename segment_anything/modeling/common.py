@@ -9,13 +9,13 @@ import torch.nn as nn
 
 from typing import Type
 
-# 반복 사용된 MLP block class화 , fc-act-fc 형태
+# repeated MLP block make it as class , fc-act-fc form
 class MLPBlock(nn.Module):
     def __init__(
         self,
         embedding_dim: int,
         mlp_dim: int,
-        act: Type[nn.Module] = nn.GELU,     #activation func의 종류는 GELU 로 정의
+        act: Type[nn.Module] = nn.GELU,     #activation func == GELU
     ) -> None:
         super().__init__()
         self.lin1 = nn.Linear(embedding_dim, mlp_dim)
@@ -29,7 +29,6 @@ class MLPBlock(nn.Module):
 # From https://github.com/facebookresearch/detectron2/blob/main/detectron2/layers/batch_norm.py # noqa
 # Itself from https://github.com/facebookresearch/ConvNeXt/blob/d1fa8f6fef0a165b27399986cc2bdacc92777e40/models/convnext.py#L119  # noqa
 
-#?????? 무슨 class 지? 
 class LayerNorm2d(nn.Module):
     def __init__(self, num_channels: int, eps: float = 1e-6) -> None:
         super().__init__()
@@ -38,7 +37,7 @@ class LayerNorm2d(nn.Module):
         self.eps = eps
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:
-        u = x.mean(1, keepdim=True)     #.mean 평균구하는 함수
+        u = x.mean(1, keepdim=True)     #.mean find average
         s = (x - u).pow(2).mean(1, keepdim=True)
         x = (x - u) / torch.sqrt(s + self.eps)
         x = self.weight[:, None, None] * x + self.bias[:, None, None]

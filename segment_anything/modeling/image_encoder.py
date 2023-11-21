@@ -15,7 +15,7 @@ from .common import LayerNorm2d, MLPBlock   #../modeling/common.py 의 layer bloc
 
 # This class and its supporting functions below lightly adapted from the ViTDet backbone available at: https://github.com/facebookresearch/detectron2/blob/main/detectron2/modeling/backbone/vit.py # noqa
 
-# 처음 image encoding하는 부분
+# first image encoding part
 class ImageEncoderViT(nn.Module):
     def __init__(
         self,
@@ -57,23 +57,23 @@ class ImageEncoderViT(nn.Module):
         super().__init__()
         self.img_size = img_size
 
-        self.patch_embed = PatchEmbed(  #Image to Patch Embedding. # B C H W -> B H W C 배치 바꾸고 , 정해진 parameter로 conv2d
+        self.patch_embed = PatchEmbed(  #Image to Patch Embedding. # B C H W -> B H W C change order , pre-defined parameter conv2d
             kernel_size=(patch_size, patch_size),
             stride=(patch_size, patch_size),
             in_chans=in_chans,
             embed_dim=embed_dim,
         )
 
-        self.pos_embed: Optional[nn.Parameter] = None   #구조체?
+        self.pos_embed: Optional[nn.Parameter] = None   #structure? Optinal?
         if use_abs_pos:
-            # Initialize absolute positional embedding with pretrain image size.  ? pretrain 가져올때 사용하나?
+            # Initialize absolute positional embedding with pretrain image size.  ? run when call pretrained
             self.pos_embed = nn.Parameter(
-                torch.zeros(1, img_size // patch_size, img_size // patch_size, embed_dim)   #배열 정의... img사이즈 변경
+                torch.zeros(1, img_size // patch_size, img_size // patch_size, embed_dim)   #initalize array, decide img_size
             )
 
         self.blocks = nn.ModuleList()   #nn.ModuleList?
         for i in range(depth):
-            block = Block(  # __Transformer blocks__ with support of window attention and residual propagation blocks 아래 class
+            block = Block(  # __Transformer blocks__ with support of window attention and residual propagation blocks class
                 dim=embed_dim,
                 num_heads=num_heads,
                 mlp_ratio=mlp_ratio,
@@ -85,9 +85,9 @@ class ImageEncoderViT(nn.Module):
                 window_size=window_size if i not in global_attn_indexes else 0,
                 input_size=(img_size // patch_size, img_size // patch_size),
             )
-            self.blocks.append(block)   #depth 만큼 반복해서 붙임
+            self.blocks.append(block)   #repeat as number of depth
 
-        self.neck = nn.Sequential(  #(conv2d - norm2d -norm2d) sequentail
+        self.neck = nn.Sequential(  #(conv2d - norm2d -norm2d) sequential
             nn.Conv2d(
                 embed_dim,
                 out_chans,
@@ -103,17 +103,17 @@ class ImageEncoderViT(nn.Module):
                 bias=False,
             ),
             LayerNorm2d(out_chans),
-        )   #여기까지 init
+        )   # init end here
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:
-        x = self.patch_embed(x)     #x 를 conv2d , # B C H W -> B H W C 순서 바꿈  
+        x = self.patch_embed(x)     # conv2d(x) , # B C H W -> B H W C change order  
         if self.pos_embed is not None:
-            x = x + self.pos_embed  # pre-trained 모델이 있으면 붙이기...
+            x = x + self.pos_embed  # pre-trained model is exist -> attach
 
-        for blk in self.blocks: #block 모델 부분 , transformer
+        for blk in self.blocks: #block model part , transformer
             x = blk(x)
 
-        x = self.neck(x.permute(0, 3, 1, 2))    #추가 fc conv
+        x = self.neck(x.permute(0, 3, 1, 2))    # add fc conv
 
         return x
 
@@ -121,7 +121,7 @@ class ImageEncoderViT(nn.Module):
 class Block(nn.Module):
     """Transformer blocks with support of window attention and residual propagation blocks"""
 
-    def __init__(  #파라미터 받아오기
+    def __init__(  #get parameter
         self,
         dim: int,
         num_heads: int,
@@ -151,7 +151,7 @@ class Block(nn.Module):
         """
         super().__init__()
         self.norm1 = norm_layer(dim)    #LayerNorm
-        self.attn = Attention(  #transformer 블록이니까 당연히 attention으로 구성
+        self.attn = Attention(  #transformer block is composition with attention 
             dim,
             num_heads=num_heads,
             qkv_bias=qkv_bias,
@@ -185,7 +185,7 @@ class Block(nn.Module):
 
 
 class Attention(nn.Module): #attention func
-    """Multi-head Attention block with relative position embeddings."""
+    '''Multi-head Attention block with relative position embeddings.'''
 
     def __init__(
         self,
@@ -196,16 +196,18 @@ class Attention(nn.Module): #attention func
         rel_pos_zero_init: bool = True,
         input_size: Optional[Tuple[int, int]] = None,
     ) -> None:
-        """
-        Args:
-            dim (int): Number of input channels.
-            num_heads (int): Number of attention heads.
-            qkv_bias (bool):  If True, add a learnable bias to query, key, value.
-            rel_pos (bool): If True, add relative positional embeddings to the attention map.
-            rel_pos_zero_init (bool): If True, zero initialize relative positional parameters.
-            input_size (tuple(int,. 이를 해결하기 위해 트랜스포머는 사전 훈련 방법과 레이블이 없는 대규모 데이터에 대해 미리 학습하는 전처리 단계를 거치는 방법을 사용합니다. 이렇게 사전 훈련된 모델은 더 적은 데이터로도 일반화된 결과를 얻을 수 있게 도와줍니 int) or None): Input resolution for calculating the relative
-                positional parameter size.
-        """
+        
+        
+        #'''Args:
+        #    dim (int): Number of input channels.
+        #    num_heads (int): Number of attention heads.
+        #    qkv_bias (bool):  If True, add a learnable bias to query, key, value.
+        #    rel_pos (bool): If True, add relative positional embeddings to the attention map.
+        #    rel_pos_zero_init (bool): If True, zero initialize relative positional parameters.
+        #    input_size (tuple(int,. 이를 해결하기 위해 트랜스포머는 사전 훈련 방법과 레이블이 없는 대규모 데이터에 대해 미리 학습하는 전처리 단계를 거치는 방법을 사용합니다. 이렇게 사전 훈련된 모델은 더 적은 데이터로도 일반화된 결과를 얻을 수 있게 도와줍니 int) or None): Input resolution for calculating the relative
+        #        positional parameter size.
+        #'''
+
         super().__init__()
         self.num_heads = num_heads
         head_dim = dim // num_heads
@@ -244,7 +246,7 @@ class Attention(nn.Module): #attention func
 #--------------------------------image_encoder class-------------------------------------------
 
 def window_partition(x: torch.Tensor, window_size: int) -> Tuple[torch.Tensor, Tuple[int, int]]:
-    #window가 분할됐을 때, 크기 조절 함수, 이미지 출력용?
+    #when window parition
     """
     Partition into non-overlapping windows with padding if needed.
     Args:
@@ -253,7 +255,7 @@ def window_partition(x: torch.Tensor, window_size: int) -> Tuple[torch.Tensor, T
 
     Returns:
         windows: windows after partition with [B * num_windows, window_size, window_size, C].
-        (Hp, Wp): padded height and width before partition
+        (Hp, Wp): padded height and width before partition 
     """
     B, H, W, C = x.shape
 
@@ -268,7 +270,7 @@ def window_partition(x: torch.Tensor, window_size: int) -> Tuple[torch.Tensor, T
     return windows, (Hp, Wp)
 
 
-def window_unpartition( #window가 분할되지 않았을때
+def window_unpartition( #when window is not partitioned
     windows: torch.Tensor, window_size: int, pad_hw: Tuple[int, int], hw: Tuple[int, int]
 ) -> torch.Tensor:
     """
@@ -366,7 +368,7 @@ def add_decomposed_rel_pos(#...??? decomposed relative positional
 
 
 class PatchEmbed(nn.Module):        #Image to patch embedding
-    #각 이미지를 패치로 분할하고 각 패치를 임베딩하여 특징 벡터로 반환
+    #partition each image to patch, embedded each patch to vector
     """
     Image to Patch Embedding. 
     """
@@ -393,7 +395,7 @@ class PatchEmbed(nn.Module):        #Image to patch embedding
             in_chans, embed_dim, kernel_size=kernel_size, stride=stride, padding=padding
         )
 
-    def forward(self, x: torch.Tensor) -> torch.Tensor: #conv후 순서바꿔 출력
+    def forward(self, x: torch.Tensor) -> torch.Tensor: #conv & change order
         x = self.proj(x)
         # B C H W -> B H W C
         x = x.permute(0, 2, 3, 1)
