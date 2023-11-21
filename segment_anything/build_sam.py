@@ -11,7 +11,7 @@ import torch
 
 from functools import partial
 
-from .modeling import ImageEncoderViT, MaskDecoder, PromptEncoder, Sam, TwoWayTransformer
+from modeling import *#ImageEncoderViT, MaskDecoder, PromptEncoder, Sam, TwoWayTransformer
 # call model class
 
 
@@ -24,7 +24,6 @@ def build_sam_vit_h(checkpoint=None):
         encoder_global_attn_indexes=[7, 15, 23, 31],
         checkpoint=checkpoint,
     )   #return
-
 
 build_sam = build_sam_vit_h 
 

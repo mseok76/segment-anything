@@ -1,4 +1,5 @@
-from predictor import SamPredictor, sam_model_registry
+from predictor import SamPredictor
+from build_sam import sam_model_registry
 from torch.utils.data import DataLoader
 from torchvision import transforms
 from PIL import Image
@@ -18,7 +19,7 @@ parser.add_argument('-b', '--batch-size', default=128, type=int,
                     help='mini-batch size (default: 128), this is the total '
                          'batch size of all GPUs on the current node when '
                          'using Data Parallel or Distributed Data Parallel')
-parser.add_argument('--lr', default=0.0001, type=float, metavar='N',
+parser.add_argument('--lr', default=0.0001, type=float, metavar ='N',
                     help='learning rate')
 
 #parser.add_argument('--seed', default=None, type=int,
@@ -30,7 +31,7 @@ def train(arg):
     now = datetime.now()
 
     # Loading the model     ***************need check**************
-    sam = sam_model_registry["vit_l"](checkpoint="./models")    #conform checkpoint 
+    sam = sam_model_registry["vit_l"](checkpoint=None)#"./models")    #conform checkpoint 
         #model type:h l b  & default is h
         #checkpoint is saved weight
     predictor = SamPredictor(sam)
