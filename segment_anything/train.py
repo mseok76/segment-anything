@@ -10,16 +10,16 @@ from datetime import datetime
 
 #Can use as parse : sam model version
 parser = argparse.ArgumentParser()
-parser.add_argument("--data_path", type=str, default='../SAM_data_001/', help = 'make path from this train.py file')
+parser.add_argument("--data_path", type=str, default='../../../dataset/SAM_data_001/', help = 'make path from this train.py file')
 
-parser.add_argument('--epochs', default=30, type=int, metavar='N',
+parser.add_argument('--epochs', default=100, type=int, metavar='N',
                     help='number of total epochs to run default = 30')
-parser.add_argument('-b', '--batch-size', default=128, type=int,
+parser.add_argument('-b', '--batch-size', default=256, type=int,
                     metavar='N',
-                    help='mini-batch size (default: 128), this is the total '
+                    help='mini-batch size (default: 256), this is the total '
                          'batch size of all GPUs on the current node when '
                          'using Data Parallel or Distributed Data Parallel')
-parser.add_argument('--lr', default=0.0001, type=float, metavar ='N',
+parser.add_argument('--lr', default=0.0003, type=float, metavar ='N',
                     help='learning rate')
 
 #parser.add_argument('--seed', default=None, type=int,
@@ -46,6 +46,7 @@ def train(arg):
         transforms.Resize((224, 224)), # Resize to the size a model expects
         transforms.ToTensor(),
         transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225]) # Normalization values for pre-trained PyTorch models
+        #check normalize value
     ])
 
     # Load custom dataset  ********************need_chage*****mask_file_position****************
@@ -95,6 +96,7 @@ def train(arg):
             
         elif(best_loss > epoch_loss):
             torch.save(sam.state_dict(), save_path + '/' + str(epoch)+ now.strftime('%m%d%H%M') + '.pkl')
+            print("Save %d epoch value"%epoch+1)
         #highest result
     print('Finished Training')
 
